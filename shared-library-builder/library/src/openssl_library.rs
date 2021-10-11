@@ -196,7 +196,7 @@ impl Library for OpenSSLLibrary {
         }
         if options.is_windows() {
             which::which("nmake").expect("Could not find `nmake`");
-            which::which("nasm").expect("Could not find `nasm`")
+            which::which("nasm").expect("Could not find `nasm`");
         }
     }
 
