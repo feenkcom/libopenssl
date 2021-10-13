@@ -9,3 +9,5 @@ path = "src/lib.rs"
 [dependencies]
 shared-library-builder = { git = "https://github.com/feenkcom/shared-library-builder-rs", features = ["git-location"] }
 which = "4.2.2"
+serde = { version = "1.0", features = [ "derive" ] }
+typetag = "0.1"

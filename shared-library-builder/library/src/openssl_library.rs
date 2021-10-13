@@ -2,18 +2,20 @@ use shared_library_builder::{
     CompiledLibraryName, GitLocation, Library, LibraryCompilationContext, LibraryDependencies,
     LibraryLocation, LibraryOptions, LibraryTarget,
 };
+
+use serde::{Serialize, Deserialize};
 use std::error::Error;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 enum LibraryArtefact {
     Crypto,
     Ssl,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenSSLLibrary {
     source_location: LibraryLocation,
     release_location: Option<LibraryLocation>,
@@ -80,6 +82,7 @@ impl OpenSSLLibrary {
     }
 }
 
+#[typetag::serde]
 impl Library for OpenSSLLibrary {
     fn location(&self) -> &LibraryLocation {
         &self.source_location
