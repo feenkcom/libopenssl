@@ -155,15 +155,10 @@ pipeline {
                     environment {
                         TARGET = "${WINDOWS_ARM64_TARGET}"
                         EXTENSION = "dll"
-                        LLVM_HOME = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\Llvm\\x64'
-                        LIBCLANG_PATH = "${LLVM_HOME}\\bin"
-                        MSBUILD_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin'
-                        MSVC_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30037\\bin\\Hostx64\\x64'
                         CARGO_HOME = "C:\\.cargo"
                         CARGO_PATH = "${CARGO_HOME}\\bin"
-                        PERL_PATH = 'C:\\Strawberry\\perl\\site\\bin;C:\\Strawberry\\perl\\bin'
                         NASM_PATH  = 'C:\\Program Files\\NASM'
-                        PATH = "${CARGO_PATH};${LIBCLANG_PATH};${MSBUILD_PATH};${CMAKE_PATH};${MSVC_PATH};${PERL_PATH};${NASM_PATH};$PATH"
+                        PATH = "${CARGO_PATH};${NASM_PATH};$PATH"
                     }
 
                     steps {
