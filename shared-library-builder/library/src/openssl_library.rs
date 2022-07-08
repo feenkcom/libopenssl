@@ -62,6 +62,7 @@ impl OpenSSLLibrary {
             LibraryTarget::X8664appleDarwin => "darwin64-x86_64-cc",
             LibraryTarget::AArch64appleDarwin => "darwin64-arm64-cc",
             LibraryTarget::X8664pcWindowsMsvc => "VC-WIN64A",
+            LibraryTarget::AArch64pcWindowsMsvc => "VC-WIN64-ARM",
             LibraryTarget::X8664UnknownlinuxGNU => "linux-x86_64-clang",
         }
     }
