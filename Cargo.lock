@@ -368,7 +368,7 @@ dependencies = [
 [[package]]
 name = "shared-library-builder"
 version = "0.3.8"
-source = "git+https://github.com/feenkcom/shared-library-builder-rs#adb91d35f834fa6fac3bb0a2defd6e1eb9685acb"
+source = "git+https://github.com/feenkcom/shared-library-builder-rs#820f359aff065b6660e18a7310b6776b55c1d13c"
 dependencies = [
  "clap",
  "file-matcher",
