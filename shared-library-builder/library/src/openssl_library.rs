@@ -2,9 +2,11 @@ use shared_library_builder::{
     CompiledLibraryName, GitLocation, Library, LibraryCompilationContext, LibraryDependencies,
     LibraryLocation, LibraryOptions, LibraryTarget,
 };
+use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::ffi::OsString;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
@@ -67,21 +69,6 @@ impl OpenSSLLibrary {
             LibraryTarget::AArch64UnknownlinuxGNU => "linux-arm64-clang"
         }
     }
-
-    pub fn create_windows_bat(
-        &self,
-        options: &LibraryCompilationContext,
-    ) -> Result<(), Box<dyn Error>> {
-        let makefile_dir = options.build_root().join(self.name());
-        let mut file = std::fs::File::create(makefile_dir.join("nmake.bat"))?;
-
-        let vc = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build";
-        writeln!(file, "call \"{}\\vcvarsall.bat\" x64", vc)?;
-        writeln!(file, "ping localhost -n 5 >nul")?;
-        writeln!(file, "nmake.exe install_sw")?;
-
-        Ok(())
-    }
 }
 
 #[typetag::serde]
@@ -129,42 +116,58 @@ impl Library for OpenSSLLibrary {
                 .unwrap_or_else(|_| panic!("Could not create {:?}", &out_dir));
         }
 
-        if options.is_windows() {
-            self.create_windows_bat(options)?;
-        }
-
         let makefile_dir = options.build_root().join(self.name());
+        if !makefile_dir.join("makefile").exists() {
+            let mut command = Command::new("perl");
+            command
+                .current_dir(&makefile_dir)
+                .arg(self.source_directory(options).join("Configure"))
+                .arg(format!("--{}", options.profile()))
+                .arg(format!(
+                    "--prefix={}",
+                    self.native_library_prefix(options).display()
+                ))
+                .arg(format!(
+                    "--openssldir={}",
+                    self.native_library_prefix(options).display()
+                ))
+                .arg(self.compiler(options))
+                .arg("OPT_LEVEL=3");
 
-        let mut command = Command::new("perl");
-        command
-            .current_dir(&makefile_dir)
-            .arg(self.source_directory(options).join("Configure"))
-            .arg(format!("--{}", options.profile()))
-            .arg(format!(
-                "--prefix={}",
-                self.native_library_prefix(options).display()
-            ))
-            .arg(format!(
-                "--openssldir={}",
-                self.native_library_prefix(options).display()
-            ))
-            .arg(self.compiler(options))
-            .arg("OPT_LEVEL=3");
+            if self.is_static() {
+                command.arg("no-shared");
+            }
 
-        if self.is_static() {
-            command.arg("no-shared");
-        }
+            let configure = command.status().unwrap();
 
-        let configure = command.status().unwrap();
-
-        if !configure.success() {
-            panic!("Could not configure {}", self.name());
-        }
+            if !configure.success() {
+                panic!("Could not configure {}", self.name());
+            }
+        };
 
         let make = if options.is_windows() {
-            Command::new("cmd")
+            let compiler = cc::Build::new()
+                .opt_level(3)
+                .target(options.target().to_string().as_str())
+                .host(LibraryTarget::for_current_host().to_string().as_str())
+                .debug(options.is_debug())
+                .get_compiler();
+            let build_tools_dir = compiler.path().parent().unwrap();
+            let nmake = build_tools_dir.join("nmake.exe");
+            if !nmake.exists() {
+                panic!("Could not find nmake.exe in {}", build_tools_dir.display());
+            };
+
+            let filtered_env: HashMap<OsString, OsString> = compiler
+                .env()
+                .iter()
+                .map(|(k, value)| (k.clone(), value.clone()))
+                .collect();
+
+            Command::new(&nmake)
                 .current_dir(&makefile_dir)
-                .args(&["/C", "nmake.bat"])
+                .envs(filtered_env)
+                .arg("install_sw")
                 .status()
                 .unwrap()
         } else {
@@ -200,7 +203,6 @@ impl Library for OpenSSLLibrary {
             which::which("make").expect("Could not find `make`");
         }
         if options.is_windows() {
-            which::which("nmake").expect("Could not find `nmake`");
             which::which("nasm").expect("Could not find `nasm`");
         }
     }
