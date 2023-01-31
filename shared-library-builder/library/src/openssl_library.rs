@@ -64,6 +64,7 @@ impl OpenSSLLibrary {
             LibraryTarget::X8664pcWindowsMsvc => "VC-WIN64A",
             LibraryTarget::AArch64pcWindowsMsvc => "VC-WIN64-ARM",
             LibraryTarget::X8664UnknownlinuxGNU => "linux-x86_64-clang",
+            LibraryTarget::AArch64UnknownlinuxGNU => "linux-arm64-clang"
         }
     }
 
