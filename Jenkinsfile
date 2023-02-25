@@ -143,7 +143,7 @@ pipeline {
                         label "${MACOS_M1_TARGET}"
                     }
                     environment {
-                        TARGET = "${MACOS_M1_TARGET}"
+                        TARGET = "${ANDROID_ARM64_TARGET}"
                         EXTENSION = "so"
                     }
 
