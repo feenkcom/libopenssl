@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::ffi::OsString;
-use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -66,7 +65,8 @@ impl OpenSSLLibrary {
             LibraryTarget::X8664pcWindowsMsvc => "VC-WIN64A",
             LibraryTarget::AArch64pcWindowsMsvc => "VC-WIN64-ARM",
             LibraryTarget::X8664UnknownlinuxGNU => "linux-x86_64-clang",
-            LibraryTarget::AArch64UnknownlinuxGNU => "linux-aarch64"
+            LibraryTarget::AArch64UnknownlinuxGNU => "linux-aarch64",
+            LibraryTarget::AArch64LinuxAndroid => "android-arm64",
         }
     }
 }
@@ -137,6 +137,10 @@ impl Library for OpenSSLLibrary {
             if self.is_static() {
                 command.arg("no-shared");
             }
+            if options.target().is_android() {
+                command.arg(format!("-D__ANDROID_API__{}=", options.android_target_api()));
+                configure_android_path(&mut command);
+            }
 
             let configure = command.status().unwrap();
 
@@ -171,9 +175,16 @@ impl Library for OpenSSLLibrary {
                 .status()
                 .unwrap()
         } else {
-            Command::new("make")
+            let mut command = Command::new("make");
+            command
                 .current_dir(&makefile_dir)
-                .arg("install_sw")
+                .arg("install_sw");
+
+            if options.target().is_android() {
+                configure_android_path(&mut command);
+            }
+
+            command
                 .status()
                 .unwrap()
         };
@@ -257,4 +268,23 @@ impl From<OpenSSLLibrary> for Box<dyn Library> {
     fn from(library: OpenSSLLibrary) -> Self {
         Box::new(library)
     }
+}
+
+fn configure_android_path(command: &mut Command) {
+    let new_path = format!(
+        "{}:{}",
+        std::env::var("ANDROID_CLANG").expect("ANDROID_CLANG must be set"),
+        std::env::var("PATH").expect("PATH must be set")
+    );
+
+    command.env(
+        "PATH",
+        new_path
+    );
+
+    let ndk_root = std::env::var("ANDROID_NDK").or_else(|_|{
+        std::env::var("NDK_HOME")
+    }).expect("ANDROID_NDK or NDK_HOME must be defined");
+
+    command.env("ANDROID_NDK_ROOT", ndk_root);
 }

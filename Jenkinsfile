@@ -31,6 +31,8 @@ pipeline {
         LINUX_AMD64_TARGET = 'x86_64-unknown-linux-gnu'
         LINUX_ARM64_SERVER_NAME = 'peter-pan'
         LINUX_ARM64_TARGET = 'aarch64-unknown-linux-gnu'
+
+        ANDROID_ARM64_TARGET = 'aarch64-linux-android'
     }
 
     stages {
@@ -62,7 +64,6 @@ pipeline {
                     environment {
                         TARGET = "${MACOS_INTEL_TARGET}"
                         EXTENSION = "dylib"
-                        PATH = "$HOME/.cargo/bin:/usr/local/bin/:$PATH"
                     }
 
                     steps {
@@ -83,7 +84,6 @@ pipeline {
                     environment {
                         TARGET = "${MACOS_M1_TARGET}"
                         EXTENSION = "dylib"
-                        PATH = "$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
                     }
 
                     steps {
@@ -104,7 +104,6 @@ pipeline {
                     environment {
                         TARGET = "${LINUX_AMD64_TARGET}"
                         EXTENSION = "so"
-                        PATH = "$HOME/.cargo/bin:$PATH"
                     }
 
                     steps {
@@ -124,7 +123,26 @@ pipeline {
                     environment {
                         TARGET = "${LINUX_ARM64_TARGET}"
                         EXTENSION = "so"
-                        PATH = "$HOME/.cargo/bin:$PATH"
+                    }
+
+                    steps {
+                        sh 'git clean -fdx'
+                        sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release"
+
+                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/${TARGET}/release/lib${ANOTHER_LIBRARY_NAME}.${EXTENSION} lib${ANOTHER_LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+
+                        stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}, lib${ANOTHER_LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
+                    }
+                }
+
+                stage ('Android arm64') {
+                    agent {
+                        label "${MACOS_M1_TARGET}"
+                    }
+                    environment {
+                        TARGET = "${MACOS_M1_TARGET}"
+                        EXTENSION = "so"
                     }
 
                     steps {
@@ -214,6 +232,7 @@ pipeline {
                 unstash "${LINUX_ARM64_TARGET}"
                 unstash "${MACOS_INTEL_TARGET}"
                 unstash "${MACOS_M1_TARGET}"
+                unstash "${ANDROID_ARM64_TARGET}"
                 unstash "${WINDOWS_AMD64_TARGET}"
                 unstash "${WINDOWS_ARM64_TARGET}"
 
@@ -237,6 +256,8 @@ pipeline {
                         lib${ANOTHER_LIBRARY_NAME}-${MACOS_INTEL_TARGET}.dylib \
                         lib${LIBRARY_NAME}-${MACOS_M1_TARGET}.dylib \
                         lib${ANOTHER_LIBRARY_NAME}-${MACOS_M1_TARGET}.dylib \
+                        lib${LIBRARY_NAME}-${ANDROID_ARM64_TARGET}.so \
+                        lib${ANOTHER_LIBRARY_NAME}-${ANDROID_ARM64_TARGET}.so \
                         ${LIBRARY_NAME}-${WINDOWS_AMD64_TARGET}.dll \
                         ${ANOTHER_LIBRARY_NAME}-${WINDOWS_AMD64_TARGET}.dll \
                         ${LIBRARY_NAME}-${WINDOWS_ARM64_TARGET}.dll \
