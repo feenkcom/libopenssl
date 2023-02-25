@@ -149,7 +149,7 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release"
+                        sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release -- --target ${TARGET}"
 
                         sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
                         sh "mv target/${TARGET}/release/lib${ANOTHER_LIBRARY_NAME}.${EXTENSION} lib${ANOTHER_LIBRARY_NAME}-${TARGET}.${EXTENSION}"
