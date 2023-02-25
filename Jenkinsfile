@@ -104,6 +104,7 @@ pipeline {
                     environment {
                         TARGET = "${LINUX_AMD64_TARGET}"
                         EXTENSION = "so"
+                        PATH = "$HOME/.cargo/bin:$PATH"
                     }
 
                     steps {
@@ -123,6 +124,7 @@ pipeline {
                     environment {
                         TARGET = "${LINUX_ARM64_TARGET}"
                         EXTENSION = "so"
+                        PATH = "$HOME/.cargo/bin:$PATH"
                     }
 
                     steps {
