@@ -12,3 +12,4 @@ which = "4.2.2"
 serde = { version = "1.0", features = [ "derive" ] }
 typetag = "0.1"
 cc = "1.0"
+ndk-build = "0.9"

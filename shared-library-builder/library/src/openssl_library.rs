@@ -138,7 +138,10 @@ impl Library for OpenSSLLibrary {
                 command.arg("no-shared");
             }
             if options.target().is_android() {
-                command.arg(format!("-D__ANDROID_API__{}=", options.android_target_api()));
+                command.arg(format!(
+                    "-D__ANDROID_API__{}=",
+                    options.android_target_api()
+                ));
                 configure_android_path(&mut command);
             }
 
@@ -176,17 +179,13 @@ impl Library for OpenSSLLibrary {
                 .unwrap()
         } else {
             let mut command = Command::new("make");
-            command
-                .current_dir(&makefile_dir)
-                .arg("install_sw");
+            command.current_dir(&makefile_dir).arg("install_sw");
 
             if options.target().is_android() {
                 configure_android_path(&mut command);
             }
 
-            command
-                .status()
-                .unwrap()
+            command.status().unwrap()
         };
 
         if !make.success() {
@@ -271,20 +270,19 @@ impl From<OpenSSLLibrary> for Box<dyn Library> {
 }
 
 fn configure_android_path(command: &mut Command) {
+    let ndk = ndk_build::ndk::Ndk::from_env().unwrap();
+
     let new_path = format!(
         "{}:{}",
-        std::env::var("ANDROID_CLANG").expect("ANDROID_CLANG must be set"),
+        ndk.toolchain_dir().unwrap().join("bin").display(),
         std::env::var("PATH").expect("PATH must be set")
     );
 
-    command.env(
-        "PATH",
-        new_path
-    );
+    command.env("PATH", new_path);
 
-    let ndk_root = std::env::var("ANDROID_NDK").or_else(|_|{
-        std::env::var("NDK_HOME")
-    }).expect("ANDROID_NDK or NDK_HOME must be defined");
+    let ndk_root = std::env::var("ANDROID_NDK")
+        .or_else(|_| std::env::var("NDK_HOME"))
+        .expect("ANDROID_NDK or NDK_HOME must be defined");
 
     command.env("ANDROID_NDK_ROOT", ndk_root);
 }

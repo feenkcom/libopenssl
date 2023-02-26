@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::Path;
 
-use shared_library_builder::{Library, LibraryCompilationContext, with_target};
+use shared_library_builder::{with_target, Library, LibraryCompilationContext};
 
 use libopenssl_library::{libcrypto, libssl};
 
