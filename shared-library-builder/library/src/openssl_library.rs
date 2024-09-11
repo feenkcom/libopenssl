@@ -245,6 +245,36 @@ impl Library for OpenSSLLibrary {
         dirs
     }
 
+    fn native_library_vars(
+        &self,
+        context: &LibraryCompilationContext,
+    ) -> Vec<(OsString, OsString)> {
+        let crypto = self.clone().be_crypto();
+        let ssl = self.clone().be_ssl();
+
+        let crypto_library = self.compiled_library_named(crypto.name(), crypto.compiled_library_name(), context);
+        let ssl_library = self.compiled_library_named(ssl.name(), ssl.compiled_library_name(), context);
+
+        vec![
+            (
+                "OPENSSL_ROOT_DIR".into(),
+                self.native_library_prefix(context).into(),
+            ),
+            (
+                "OPENSSL_INCLUDE_DIR".into(),
+                self.native_library_prefix(context).join("include").into(),
+            ),
+            (
+                "OPENSSL_CRYPTO_LIBRARY".into(),
+                crypto_library.into(),
+            ),
+            (
+                "OPENSSL_SSL_LIBRARY".into(),
+                ssl_library.into(),
+            )
+        ]
+    }
+
     fn pkg_config_directory(&self, context: &LibraryCompilationContext) -> Option<PathBuf> {
         let directory = self
             .native_library_prefix(context)
