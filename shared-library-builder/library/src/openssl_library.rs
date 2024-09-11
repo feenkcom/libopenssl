@@ -200,7 +200,9 @@ impl Library for OpenSSLLibrary {
             return vec![lib];
         }
         if context.is_windows() {
-            let lib = self.native_library_prefix(context).join("bin");
+            let lib = self
+                .native_library_prefix(context)
+                .join(if self.is_static() { "lib" } else { "bin" });
             return vec![lib];
         }
         vec![]
@@ -252,8 +254,10 @@ impl Library for OpenSSLLibrary {
         let crypto = self.clone().be_crypto();
         let ssl = self.clone().be_ssl();
 
-        let crypto_library = self.compiled_library_named(crypto.name(), crypto.compiled_library_name(), context);
-        let ssl_library = self.compiled_library_named(ssl.name(), ssl.compiled_library_name(), context);
+        let crypto_library =
+            self.compiled_library_named(crypto.name(), crypto.compiled_library_name(), context);
+        let ssl_library =
+            self.compiled_library_named(ssl.name(), ssl.compiled_library_name(), context);
 
         vec![
             (
@@ -264,14 +268,8 @@ impl Library for OpenSSLLibrary {
                 "OPENSSL_INCLUDE_DIR".into(),
                 self.native_library_prefix(context).join("include").into(),
             ),
-            (
-                "OPENSSL_CRYPTO_LIBRARY".into(),
-                crypto_library.into(),
-            ),
-            (
-                "OPENSSL_SSL_LIBRARY".into(),
-                ssl_library.into(),
-            )
+            ("OPENSSL_CRYPTO_LIBRARY".into(), crypto_library.into()),
+            ("OPENSSL_SSL_LIBRARY".into(), ssl_library.into()),
         ]
     }
 
